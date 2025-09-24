@@ -2,5 +2,56 @@ import streamlit as st
 from client import API_STOCK_MARKET
 
 ## give page title 
-st.set_page_config(page_title = 'Stock Market App Deployment')
+st.set_page_config(page_title = 'Stock Market App Deployment' , layout='wide')
 
+## add title inside page
+st.title("Stock market candelstick chart ploting")
+
+st.subheader("By Amit Pawar")
+
+company_name = st.text_input("Company Name")
+
+## Create function to fetch data
+
+@st.cache_resource(ttl=36000)
+def fetch_data():
+    return API_STOCK_MARKET(st.secrets["API_KEY"])
+
+stock_api = fetch_data
+
+## search symbol
+@st.cache_data(ttl=36000)
+def get_symbol(company):
+    return stock_api.search_symbol(company)
+
+## create function to fetch time series data
+@st.cache_data(ttl=36000)
+def Time_series_data(symbol):
+    return stock_api.time_series_daily(symbol)
+
+## create function for plot
+@st.cache_data(ttl=36000)
+def plot_chart(symbol):
+    return stock_api.plot(symbol)
+
+if company_name :
+    company_data = get_symbol(company=company_name)
+
+    if company_data:
+        symbol_list = list(company_data.keys())
+        option = st.selectbox("symbol",symbol_list)
+
+        COMPANY_NAME = st.success(f"**COMPANY_NAME**: , {company_data[option][0]}")
+        COMPANY_REGION = st.success(f"**COMPANY_region**: , {company_data[option][1]}")
+        COMPANY_CURRENCY = st.success(f"**COMPANY_currency**: , {company_data[option][2]}")
+
+    # add button
+
+    submit = st.button('plot', type='primary')
+
+    # plot the graph   
+
+    if submit:
+        graph = plot_chart(option)
+
+        st.plotly_chart(graph) 
